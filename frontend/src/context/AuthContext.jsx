@@ -42,8 +42,6 @@ export function AuthProvider({ children }) {
     async function loadUser() {
       const storedToken = localStorage.getItem('token')
       if (!storedToken) {
-        // Automatically default to admin (vansh / 1234)
-        await quickLogin('vansh', '1234')
         setIsLoading(false)
         return
       }
@@ -57,8 +55,10 @@ export function AuthProvider({ children }) {
           setUser(normalizeUser(userData))
           setToken(storedToken)
         } else {
-          // Token expired or invalid, auto-login vansh / 1234
-          await quickLogin('vansh', '1234')
+          // Token expired or invalid, clear session (require manual login)
+          localStorage.removeItem('token')
+          setToken('')
+          setUser(null)
         }
       } catch (e) {
         console.error('Failed to load user session', e)

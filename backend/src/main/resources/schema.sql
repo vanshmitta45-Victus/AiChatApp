@@ -129,6 +129,18 @@ CREATE TABLE IF NOT EXISTS document_analysis_chunks (
     embedding VECTOR(768)
 );
 
+-- JDBC RAG store used by DocumentVectorService (standalone, document_name based)
+CREATE TABLE IF NOT EXISTS document_chunks (
+    id BIGSERIAL PRIMARY KEY,
+    document_name VARCHAR(255) NOT NULL,
+    chunk_index INT NOT NULL,
+    content TEXT NOT NULL,
+    embedding VECTOR(768),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (document_name, chunk_index)
+);
+CREATE INDEX IF NOT EXISTS idx_document_chunks_name ON document_chunks(document_name);
+
 -- 7. AI Resume Studio
 CREATE TABLE IF NOT EXISTS resume_analyses (
     id BIGSERIAL PRIMARY KEY,

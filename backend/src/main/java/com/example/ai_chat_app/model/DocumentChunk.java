@@ -22,8 +22,9 @@ public class DocumentChunk {
     @Column(name = "chunk_text", nullable = false, columnDefinition = "TEXT")
     private String chunkText;
 
-    // Vector(768) embeddings represented as string for SQL or column definition
-    @Column(name = "embedding", columnDefinition = "vector(768)")
+    // Embedding stored as TEXT "[1,2,...]" for portability (plain Postgres CI/tests).
+    // Prod pgvector similarity uses JDBC document_chunks.embedding VECTOR(768) via DocumentVectorService.
+    @Column(name = "embedding", columnDefinition = "TEXT")
     private String embedding;
 
     public DocumentChunk() {}

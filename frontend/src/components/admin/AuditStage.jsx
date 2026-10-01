@@ -73,7 +73,7 @@ const INITIAL_AUDIT_LOGS = [
 ]
 
 export default function AuditStage() {
-  const { user } = useAuth()
+  const { user, authHeader } = useAuth()
   const [logs, setLogs] = useState(INITIAL_AUDIT_LOGS)
   const [search, setSearch] = useState('')
   const [selectedLog, setSelectedLog] = useState(null)
@@ -82,7 +82,7 @@ export default function AuditStage() {
   useEffect(() => {
     async function fetchAudit() {
       try {
-        const res = await fetch('/api/audit')
+        const res = await fetch('/api/audit', { headers: { ...authHeader() } })
         if (res.ok) {
           const data = await res.json()
           if (Array.isArray(data) && data.length > 0) {
@@ -94,7 +94,7 @@ export default function AuditStage() {
       }
     }
     fetchAudit()
-  }, [])
+  }, [authHeader])
 
   const filteredLogs = logs.filter(log => {
     const matchesSearch = log.principal.toLowerCase().includes(search.toLowerCase()) ||

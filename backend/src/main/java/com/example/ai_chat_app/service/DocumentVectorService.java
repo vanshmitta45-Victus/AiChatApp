@@ -19,9 +19,10 @@ public class DocumentVectorService {
     private JdbcTemplate jdbcTemplate;
 
     public void saveChunk(String documentName, int chunkIndex, String content, List<Double> embedding) {
-        String arraySql = toArrayLiteral(embedding);
-        String sql = "INSERT INTO document_chunks (document_name, chunk_index, content, embedding) VALUES (?, ?, ?, " + arraySql + ")";
-        jdbcTemplate.update(sql, documentName, chunkIndex, content);
+        String vectorLiteral = toVectorLiteral(embedding);
+        String sql = "INSERT INTO document_chunks (document_name, chunk_index, content, embedding) VALUES (?, ?, ?, ?::vector) " +
+                "ON CONFLICT (document_name, chunk_index) DO UPDATE SET content = EXCLUDED.content, embedding = EXCLUDED.embedding";
+        jdbcTemplate.update(sql, documentName, chunkIndex, content, vectorLiteral);
     }
 
     public List<DocumentSearchMatch> searchSimilarChunks(List<Double> queryEmbedding, int topK) {
@@ -29,10 +30,10 @@ public class DocumentVectorService {
             return Collections.emptyList();
         }
 
-        String arraySql = toArrayLiteral(queryEmbedding);
-        String sql = "SELECT document_name, chunk_index, content, (embedding <=> " + arraySql + ") AS distance " +
+        String vectorLiteral = toVectorLiteral(queryEmbedding);
+        String sql = "SELECT document_name, chunk_index, content, (embedding <=> ?::vector) AS distance " +
                      "FROM document_chunks " +
-                     "ORDER BY embedding <=> " + arraySql + " ASC " +
+                     "ORDER BY embedding <=> ?::vector ASC " +
                      "LIMIT ?";
 
         try {
@@ -41,7 +42,7 @@ public class DocumentVectorService {
                     rs.getInt("chunk_index"),
                     rs.getString("content"),
                     rs.getDouble("distance")
-            ), topK);
+            ), vectorLiteral, vectorLiteral, topK);
         } catch (Exception e) {
             System.err.println("Error executing similarity search: " + e.getMessage());
             return Collections.emptyList();
@@ -101,10 +102,10 @@ public class DocumentVectorService {
         return count != null ? count : 0L;
     }
 
-    private String toArrayLiteral(List<Double> list) {
+    private String toVectorLiteral(List<Double> list) {
         if (list == null || list.isEmpty()) {
-            return "ARRAY[]::double precision[]";
+            return "[0]";
         }
-        return "ARRAY[" + list.stream().map(String::valueOf).collect(Collectors.joining(",")) + "]::double precision[]";
+        return "[" + list.stream().map(String::valueOf).collect(Collectors.joining(",")) + "]";
     }
 }
