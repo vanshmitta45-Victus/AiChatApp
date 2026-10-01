@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # 1. PostgreSQL with Official pgvector Extension Pre-loaded
+  # ============================================================================
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: aichat-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aichatdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d aichatdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - aichat-network
+
+  # ============================================================================
+  # 2. Spring Boot 3 Backend Container
+  # ============================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aichat-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/aichatdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: "1234"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      OLLAMA_API_URL: http://host.docker.internal:11434/api/chat
+      OLLAMA_EMBEDDING_URL: http://host.docker.internal:11434/api/embeddings
+      OLLAMA_MODEL_NAME: llama3.2
+      OLLAMA_EMBEDDING_MODEL: nomic-embed-text
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/auth/me"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 40s
+    networks:
+      - aichat-network
+
+  # ============================================================================
+  # 3. Vite React Spatial Frontend Container (Nginx Reverse Proxy)
+  # ============================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aichat-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+    networks:
+      - aichat-network
+
+volumes:
+  pgvector_data:
+    driver: local
+
+networks:
+  aichat-network:
+    driver: bridge

@@ -1,0 +1,55 @@
+# ==============================================================================
+# Git Ignore Configuration for AI Spatial Collaboration Platform
+# ==============================================================================
+
+# Ignore duplicate junction sources (keep canonical backend/ and frontend/ clean)
+ai-chat-app (Backend)/
+ai-chat-app (Frontend)/
+
+# Dependencies
+**/node_modules/
+.pnp
+.pnp.js
+
+# Build Outputs & Bundles
+**/dist/
+**/dist-ssr/
+**/build/
+**/bin/
+**/out/
+*.local
+
+# Gradle Artifacts & Caches
+**/.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+!**/gradle/wrapper/gradle-wrapper.jar
+
+# Logs
+*.log
+**/logs/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Uploads & Ephemeral Media
+**/uploads/*
+!**/uploads/.gitkeep
+
+# IDEs & OS Files
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/*
+!.vscode/extensions.json
+.settings/
+.project
+.classpath
+
+# Backup & Scratch Files
+*.bak
+*.tmp
+*.swp
+scratch/

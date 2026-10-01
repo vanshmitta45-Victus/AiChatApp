@@ -1,0 +1,4 @@
+﻿Quantum AI Research Note (2026):
+Project Nebula is an autonomous satellite constellation.
+The quantum optical transceiver operates on wavelength 1550nm.
+Key researcher: Marcus Vance.
